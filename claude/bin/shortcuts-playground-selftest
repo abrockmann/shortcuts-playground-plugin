@@ -89,6 +89,7 @@ DATA_FILES=(
   "toolkit-v78-first-party-parameter-keys.json"
   "toolkit-v78-first-party-enum-cases.json"
   "toolkit-v78-trigger-parameter-keys.json"
+  "macos27-workflow-trigger-samples.json"
   "macos27-shortpy-grounding.json"
   "shortcuts-official-glyph-mapping.json"
   "shortcuts-icon-colors.json"

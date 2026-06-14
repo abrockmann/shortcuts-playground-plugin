@@ -62,6 +62,9 @@ ALLOW_EMPTY_STRING_KEYS = {
 REPEATING_UUID_RE = re.compile(
     r"\b([0-9A-F])\1{7}-\1{4}-\1{4}-\1{4}-\1{12}\b"
 )
+UUID_RE = re.compile(
+    r"^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$"
+)
 
 # Verified against an Apple-built sample shortcut covering all condition codes.
 # All conditional codes use explicit WFInput as a Type=Variable wrapper. There
@@ -260,6 +263,7 @@ GET_DISTANCE_ACCURACY_VALUES = {
 APP_ACTION_MODES = {"App", "All Apps"}
 CONTENT_ITEM_INPUT_PARAMETERS = {"Library"}
 TOOLKIT_PARAMETER_CATALOG_MIN_MACOS_MAJOR = 27
+WORKFLOW_TRIGGER_CATALOG_MIN_MACOS_MAJOR = 27
 TOOLKIT_PARAMETER_STRUCTURAL_KEYS = {
     # Shortcuts plist metadata keys, not action parameters in ToolKit.
     "AppIntentDescriptor",
@@ -1252,6 +1256,57 @@ def load_toolkit_parameter_boolean_keys(
     return schemas
 
 
+def load_workflow_trigger_catalog(
+    skill_dir: Path,
+    target_macos_major: int | None = None,
+    target_platform: str | None = "macos",
+) -> dict[str, object]:
+    """Load exported OS 27 WFWorkflowTriggers samples for structural validation."""
+
+    if (
+        target_macos_major is not None
+        and target_macos_major < WORKFLOW_TRIGGER_CATALOG_MIN_MACOS_MAJOR
+    ):
+        return {
+            "workflow_identifiers": set(),
+            "serialized_keys_by_identifier": {},
+        }
+    path = skill_dir / "data/macos27-workflow-trigger-samples.json"
+    if not path.exists():
+        return {
+            "workflow_identifiers": set(),
+            "serialized_keys_by_identifier": {},
+        }
+    with path.open("r", encoding="utf-8") as handle:
+        payload = json.load(handle)
+    workflow_identifiers: set[str] = set()
+    serialized_keys_by_identifier: dict[str, set[str]] = {}
+    for entry in (payload.get("triggers") or {}).values():
+        if not isinstance(entry, dict):
+            continue
+        platforms = entry.get("platforms") or []
+        if not _catalog_platforms_match_target(platforms, target_platform):
+            continue
+        workflow_trigger = entry.get("workflowTrigger")
+        if not isinstance(workflow_trigger, dict):
+            continue
+        wf_identifier = workflow_trigger.get("WFTriggerIdentifier")
+        if not isinstance(wf_identifier, str) or not wf_identifier:
+            continue
+        workflow_identifiers.add(wf_identifier)
+        keys = serialized_keys_by_identifier.setdefault(wf_identifier, set())
+        for key in entry.get("serializedParameterKeys") or []:
+            if isinstance(key, str) and key:
+                keys.add(key)
+        for key in entry.get("toolkitParameterKeys") or []:
+            if isinstance(key, str) and key:
+                keys.add(key)
+    return {
+        "workflow_identifiers": workflow_identifiers,
+        "serialized_keys_by_identifier": serialized_keys_by_identifier,
+    }
+
+
 def load_allowed_ids(
     skill_dir: Path,
     target_macos_major: int | None = None,
@@ -2021,6 +2076,104 @@ def iter_aggrandizements(obj):
             yield from iter_aggrandizements(v)
 
 
+WORKFLOW_TRIGGER_KEYS = {
+    "WFTriggerIdentifier",
+    "WFTriggerSerializedParameters",
+    "WFTriggerUUID",
+}
+
+
+def _contains_catalog_placeholder(value) -> bool:
+    if isinstance(value, dict):
+        if "$placeholder" in value:
+            return True
+        return any(_contains_catalog_placeholder(item) for item in value.values())
+    if isinstance(value, list):
+        return any(_contains_catalog_placeholder(item) for item in value)
+    return False
+
+
+def _validate_workflow_triggers(
+    plist,
+    errors: list[str],
+    workflow_trigger_catalog: dict[str, object],
+    target_macos_major: int | None,
+) -> None:
+    if "WFWorkflowTriggers" not in plist:
+        return
+    if target_macos_major is not None and target_macos_major < WORKFLOW_TRIGGER_CATALOG_MIN_MACOS_MAJOR:
+        errors.append(
+            "WFWorkflowTriggers requires macOS/iOS 27+. "
+            f"Target macOS is {target_macos_major}; remove the trigger header or validate with --target-macos 27."
+        )
+    triggers = plist.get("WFWorkflowTriggers")
+    if not isinstance(triggers, list):
+        errors.append("WFWorkflowTriggers must be an array")
+        return
+    workflow_identifiers = workflow_trigger_catalog.get("workflow_identifiers")
+    if not isinstance(workflow_identifiers, set):
+        workflow_identifiers = set()
+    serialized_keys_by_identifier = workflow_trigger_catalog.get(
+        "serialized_keys_by_identifier"
+    )
+    if not isinstance(serialized_keys_by_identifier, dict):
+        serialized_keys_by_identifier = {}
+
+    for index, trigger in enumerate(triggers):
+        prefix = f"WFWorkflowTriggers[{index}]"
+        if not isinstance(trigger, dict):
+            errors.append(f"{prefix} must be a dictionary")
+            continue
+        missing = sorted(WORKFLOW_TRIGGER_KEYS - set(trigger))
+        if missing:
+            errors.append(f"{prefix} missing required key(s): {', '.join(missing)}")
+        extra = sorted(set(trigger) - WORKFLOW_TRIGGER_KEYS)
+        if extra:
+            errors.append(f"{prefix} has unknown key(s): {', '.join(extra)}")
+
+        wf_identifier = trigger.get("WFTriggerIdentifier")
+        if not isinstance(wf_identifier, str) or not wf_identifier.strip():
+            errors.append(f"{prefix}.WFTriggerIdentifier must be a non-empty string")
+        elif workflow_identifiers and wf_identifier not in workflow_identifiers:
+            errors.append(
+                f"{prefix}.WFTriggerIdentifier is not in the exported OS 27 trigger catalog: "
+                f"{wf_identifier}"
+            )
+
+        trigger_uuid = trigger.get("WFTriggerUUID")
+        if not isinstance(trigger_uuid, str) or not trigger_uuid.strip():
+            errors.append(f"{prefix}.WFTriggerUUID must be a non-empty UUID string")
+        elif not UUID_RE.match(trigger_uuid):
+            errors.append(
+                f"{prefix}.WFTriggerUUID must be an uppercase UUID generated with uuidgen: "
+                f"{trigger_uuid!r}"
+            )
+        elif REPEATING_UUID_RE.search(trigger_uuid):
+            errors.append(
+                f"{prefix}.WFTriggerUUID is a repeating placeholder UUID: {trigger_uuid}"
+            )
+
+        serialized = trigger.get("WFTriggerSerializedParameters")
+        if not isinstance(serialized, dict):
+            errors.append(f"{prefix}.WFTriggerSerializedParameters must be a dictionary")
+            continue
+        if _contains_catalog_placeholder(serialized):
+            errors.append(
+                f"{prefix}.WFTriggerSerializedParameters still contains catalog placeholder values; "
+                "replace local picker payloads with user-provided/exported values before signing."
+            )
+        if isinstance(wf_identifier, str):
+            expected_keys = serialized_keys_by_identifier.get(wf_identifier, set())
+            if isinstance(expected_keys, set) and expected_keys:
+                unknown = sorted(key for key in serialized if key not in expected_keys)
+                if unknown:
+                    expected = ", ".join(sorted(expected_keys))
+                    errors.append(
+                        f"{prefix}.WFTriggerSerializedParameters has unknown key(s) for "
+                        f"{wf_identifier}: {', '.join(unknown)}. Exported/ToolKit keys: {expected}."
+                    )
+
+
 def validate(
     plist,
     allowed_ids: set[str],
@@ -2031,6 +2184,8 @@ def validate(
     toolkit_parameter_schemas: Optional[dict[str, set[str]]] = None,
     toolkit_parameter_enum_cases: Optional[dict[str, dict[str, set[str]]]] = None,
     toolkit_parameter_boolean_keys: Optional[dict[str, set[str]]] = None,
+    workflow_trigger_catalog: Optional[dict[str, object]] = None,
+    target_macos_major: int | None = None,
 ) -> Tuple[list[str], Optional[Tuple[int, str, str]]]:
     errors: list[str] = []
     first_error: Optional[Tuple[int, str, str]] = None
@@ -2039,6 +2194,7 @@ def validate(
     toolkit_parameter_schemas = toolkit_parameter_schemas or {}
     toolkit_parameter_enum_cases = toolkit_parameter_enum_cases or {}
     toolkit_parameter_boolean_keys = toolkit_parameter_boolean_keys or {}
+    workflow_trigger_catalog = workflow_trigger_catalog or {}
     actions = plist.get("WFWorkflowActions", [])
     comments: list[str] = []
     uuid_to_ident: dict[str, str] = {}
@@ -2067,6 +2223,13 @@ def validate(
     rename_file_source_vars: dict[str, int] = {}
     rename_file_source_uuids: dict[str, int] = {}
     rename_file_output_uuids: dict[str, int] = {}
+
+    _validate_workflow_triggers(
+        plist,
+        errors,
+        workflow_trigger_catalog,
+        target_macos_major,
+    )
 
     for idx, act in enumerate(actions):
         ident = act.get("WFWorkflowActionIdentifier")
@@ -4265,6 +4428,11 @@ def main() -> int:
         target_macos_major,
         target_platform,
     )
+    workflow_trigger_catalog = load_workflow_trigger_catalog(
+        skill_dir,
+        target_macos_major,
+        target_platform,
+    )
     allowed_glyph_ids, allowed_icon_colors = load_icon_metadata(skill_dir)
 
     try:
@@ -4283,6 +4451,8 @@ def main() -> int:
         toolkit_parameter_schemas,
         toolkit_parameter_enum_cases,
         toolkit_parameter_boolean_keys,
+        workflow_trigger_catalog,
+        target_macos_major,
     )
 
     # Repeating-hex UUID check (agent placeholder detection). Runs on the raw

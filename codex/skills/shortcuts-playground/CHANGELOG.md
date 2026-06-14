@@ -1,5 +1,22 @@
 # Autoresearch Loop Changelog
 
+## Date: June 14, 2026 - macOS/iOS 27 exported automation headers
+
+### Summary
+
+Mapped real OS 27 automation-bearing shortcut exports and packaged sanitized `WFWorkflowTriggers` samples as the portable authoring source for native automation headers.
+
+### Fixes Applied
+
+- Added `data/macos27-workflow-trigger-samples.json` with sanitized exported `WFWorkflowTriggers` shapes for 37 of 42 ToolKit trigger variants.
+- Documented the importable root plist shape: `WFWorkflowTriggers` array containing `WFTriggerIdentifier`, `WFTriggerUUID`, and `WFTriggerSerializedParameters`.
+- Documented observed defaults: change-style triggers serialize as `both`, Wi-Fi connect can omit connection type while disconnect uses `disconnected`, and several picker/default fields are omitted when the default UI value is selected.
+- Kept live database reads/writes out of normal shortcut generation; the new data is static authoring metadata and remains target-gated for OS 27 users.
+- Updated `lookup_action_grounding.py` so trigger lookups expose `workflowTriggerSample` alongside ToolKit parameter keys and enum cases.
+- Added validator checks for top-level `WFWorkflowTriggers`: OS 27 target gating, required keys, uppercase UUIDs, dictionary parameters, known trigger identifiers, known serialized keys, and rejection of catalog placeholders.
+- Added regression coverage proving the workflow trigger catalog is packaged, redacted, mirrored between Codex and Claude, and surfaced by lookup.
+- Left Display, External Drive, File Modified, Folder Changed, and Stage Manager marked sample-gated pending more exported XML samples.
+
 ## Date: June 13, 2026 - AppIntent parameter schema validation
 
 ### Summary

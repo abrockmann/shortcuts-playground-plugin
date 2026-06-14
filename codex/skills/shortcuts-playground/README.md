@@ -54,7 +54,7 @@ from the patch payload before running `scripts/validate_shortcut.py`.
 | [`DATE_TIME.md`](DATE_TIME.md) | UNIX timestamp, ISO 8601, RFC 2822, and custom date/time recipes |
 | [`VARIABLES.md`](VARIABLES.md) | Variable reference system |
 | [`CONTROL_FLOW.md`](CONTROL_FLOW.md) | Repeat, Conditional, Menu patterns |
-| [`AUTOMATION_TRIGGERS.md`](AUTOMATION_TRIGGERS.md) | OS 27 ToolKit automation trigger metadata for research/sample requests |
+| [`AUTOMATION_TRIGGERS.md`](AUTOMATION_TRIGGERS.md) | OS 27 ToolKit automation trigger metadata plus exported `WFWorkflowTriggers` samples for automation shortcuts |
 | [`FILTERS.md`](FILTERS.md) | Content filters for Find/Filter actions |
 | [`HEALTHKIT.md`](HEALTHKIT.md) | iOS/iPadOS Health action schemas and bundled anonymized XML examples |
 | [`EXAMPLES.md`](EXAMPLES.md) | Complete working examples |
@@ -73,6 +73,7 @@ from the patch payload before running `scripts/validate_shortcut.py`.
 | `data/toolkit-v78-first-party-parameter-keys.json` | Target-gated OS 27 first-party parameter-key/name/type catalog for AppIntent schema checks |
 | `data/toolkit-v78-first-party-enum-cases.json` | Static OS 27 enum-case catalog for ToolKit action and trigger parameter type names |
 | `data/toolkit-v78-trigger-parameter-keys.json` | OS 27 ToolKit automation trigger IDs, Python names, parameter keys, and output types |
+| `data/macos27-workflow-trigger-samples.json` | Sanitized exported `WFWorkflowTriggers` samples for OS 27 automation headers |
 | `data/macos27-shortpy-grounding.json` | Reviewed static Apple-derived grounding catalog for macOS 27 action schemas and Shortpy names |
 | `data/healthkit-ios26.2-reference.json` | HealthKit types, category values, workout types, and units |
 

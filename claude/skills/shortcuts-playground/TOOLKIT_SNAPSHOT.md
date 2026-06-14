@@ -10,6 +10,7 @@ This skill bundles precomputed action-ID allowlists so it can be shared without 
 - `data/toolkit-v78-first-party-parameter-keys.json` - compact first-party ToolKit v78 parameter-key/name/type catalog with per-parameter platform provenance, used by `lookup_action_grounding.py` for broad AppIntent/schema discovery.
 - `data/toolkit-v78-first-party-enum-cases.json` - compact first-party ToolKit v78 enum-case catalog for action and automation-trigger parameter type names.
 - `data/toolkit-v78-trigger-parameter-keys.json` - compact ToolKit v78 automation trigger catalog with trigger IDs, Python names, parameter keys, and output type identifiers.
+- `data/macos27-workflow-trigger-samples.json` - sanitized exported OS 27 `WFWorkflowTriggers` samples for automation headers that have been observed in real shortcut exports.
 - `data/macos27-shortpy-grounding.json` - reviewed static Apple-derived macOS 27 grounding catalog with ToolKit `pythonName`, Apple Shortpy keyword, ToolRenderer utility, and ShortcutsLanguage syntax evidence.
 
 Only the identifiers and compact parameter/enum metadata needed for validation and lookup are bundled. This keeps the plugin lightweight compared with the full ToolKit SQLite metadata.
@@ -58,4 +59,4 @@ The lookup helper also reads `data/toolkit-v78-first-party-enum-cases.json` and 
 
 `data/toolkit-v78-trigger-parameter-keys.json` packages the 42 automation triggers exposed in local macOS 27 and iOS 27 Simulator ToolKit v78 databases. This includes identifiers such as `com.apple.shortcuts.WFTimeOfDayTrigger.at_time_on_recurring_day`, Apple Shortpy-style names such as `when_app_opened`, trigger parameter keys, and raw output type identifiers.
 
-This catalog is discovery metadata only. It does not prove importable Personal Automation or inline trigger serialization, and the validator does not validate top-level automation trigger payloads. Use [AUTOMATION_TRIGGERS.md](AUTOMATION_TRIGGERS.md) and `lookup_action_grounding.py` to request precise exported samples or to enrich future authoring work, not to emit automation database rows.
+ToolKit trigger metadata is discovery metadata only. Portable automation headers must come from exported shortcut evidence: use `data/macos27-workflow-trigger-samples.json` and [AUTOMATION_TRIGGERS.md](AUTOMATION_TRIGGERS.md) for sanitized `WFWorkflowTriggers` payload shapes. The validator checks top-level `WFWorkflowTriggers` for OS 27 targets, rejects placeholder values, and target-gates automation headers away from macOS 26/iOS 26 output. Do not infer trigger payloads from ToolKit rows alone.

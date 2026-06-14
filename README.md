@@ -8,7 +8,7 @@ Shortcuts Playground is a plugin for Claude Code and Codex that lets you turn an
 
 Under the hood, shortcuts have always been XML files that get signed and encrypted into a special, Apple-only `.shortcut` format. Shortcuts Playground ships a comprehensive knowledge base that teaches Claude and Codex how Shortcuts actions work, what syntax they use, and how they connect to one another. Agents generate the XML, validate it through a loop, and sign it using Apple's native `shortcuts` CLI.
 
-For OS 27-era Shortcuts, the plugin also ships target-gated ToolKit v78 action coverage from macOS 27 and iOS 27 Simulator, plus reviewed static Apple-derived grounding, parameter-key, enum-case, and automation-trigger catalogs. Those catalogs are generated from Apple's local ToolKit/ToolRenderer/WorkflowKit metadata on a maintainer Mac, then packaged as JSON so existing users do not need macOS 27 or private Apple frameworks.
+For OS 27-era Shortcuts, the plugin also ships target-gated ToolKit v78 action coverage from macOS 27 and iOS 27 Simulator, plus reviewed static Apple-derived grounding, parameter-key, enum-case, automation-trigger, and exported `WFWorkflowTriggers` catalogs. Those catalogs are generated from Apple's local ToolKit/ToolRenderer/WorkflowKit metadata and maintainer-exported shortcut XML, then packaged as JSON so existing users do not need macOS 27 or private Apple frameworks.
 
 The result is a valid shortcut, built from a sentence.
 
@@ -20,7 +20,7 @@ A project by [Federico Viticci](https://www.macstories.net). Read more [here](ht
 
 **v1.2.0** adds early, opt-in macOS/iOS 27 support while keeping macOS 26 users on the existing validation surface by default.
 
-- macOS/iOS 27 ToolKit v78 action snapshots, parameter catalogs, enum catalogs, and trigger metadata ship as static JSON; users do not need macOS 27 or private Apple frameworks installed.
+- macOS/iOS 27 ToolKit v78 action snapshots, parameter catalogs, enum catalogs, trigger metadata, and sanitized exported `WFWorkflowTriggers` samples ship as static JSON; users do not need macOS 27 or private Apple frameworks installed.
 - New OS 27-era authoring coverage includes Stored Content, Add Item to List, Otherwise If, Get Selected Text, Get What's On Screen, VPN actions, Notes markdown, Safari tab groups, route options, and several AppIntent parameter/enum updates.
 - Validators now catch more blank fields, wrong input keys, bad enum values, invalid boolean parameters, AppIntent schema typos, conditional wiring errors, and signing/import pitfalls across both Claude Code and Codex.
 - OS 27-only identifiers and parameters require `target_macos = "27"` / `SHORTCUTS_PLAYGROUND_TARGET_MACOS=27`; default validation remains conservative for existing macOS 26 users.

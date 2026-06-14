@@ -167,7 +167,7 @@ Your `~/Documents/Shortcuts Playground/` directory stays intact — the plugin n
 
 ## What you're getting
 
-- **One skill** — the full Shortcuts knowledge base: curated best-practice rules, verified action identifiers from Apple's ToolKit v63 plus target-gated macOS/iOS 27 ToolKit v78 coverage, reviewed static OS 27 parameter/enum/trigger catalogs, and 19 golden example XMLs. Claude auto-loads it when you ask for a shortcut.
+- **One skill** — the full Shortcuts knowledge base: curated best-practice rules, verified action identifiers from Apple's ToolKit v63 plus target-gated macOS/iOS 27 ToolKit v78 coverage, reviewed static OS 27 parameter/enum/trigger catalogs, exported `WFWorkflowTriggers` samples, and 19 golden example XMLs. Claude auto-loads it when you ask for a shortcut.
 - **Two agents** — `shortcut-builder` (new-from-scratch) and `shortcut-remixer` (diff an existing XML). Each is a specialist with its own system prompt and bounded research budget.
 - **One hook** — `PostToolUse` auto-validator that runs the Craig Loop validator on every Write/Edit that produces a Shortcuts plist. Catches structural errors before signing.
 - **Four bin commands** — `validate-shortcut`, `resolve-icon`, `sign-shortcut`, `shortcuts-playground-selftest`. All added to Claude's Bash PATH when the plugin is enabled; all also callable from your own terminal for manual debugging.
@@ -177,7 +177,7 @@ Your `~/Documents/Shortcuts Playground/` directory stays intact — the plugin n
 
 You're installing **v1.2.0**. The full CHANGELOG is in the repo. Big recent changes:
 
-- **v1.2.0** — early, target-gated macOS/iOS 27 support with ToolKit v78 action snapshots, AppIntent parameter and enum validation, OS 27 trigger metadata for discovery, Stored Content/Add Item to List/Otherwise If/VPN/on-screen-context coverage, stronger random stress testing, and safer signing wrappers.
+- **v1.2.0** — early, target-gated macOS/iOS 27 support with ToolKit v78 action snapshots, AppIntent parameter and enum validation, OS 27 trigger metadata and exported `WFWorkflowTriggers` samples for automation shortcuts, Stored Content/Add Item to List/Otherwise If/VPN/on-screen-context coverage, stronger random stress testing, and safer signing wrappers.
 
 - **v1.1.0** — issue-regression hardening across Claude and Codex, HealthKit label fixes, improved signing wrappers, and stronger validator guidance.
 

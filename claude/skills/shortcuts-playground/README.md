@@ -41,7 +41,7 @@ If `shortcuts sign` reports that a validator-clean plist "isn't in the correct f
 | [BEST_PRACTICES.md](BEST_PRACTICES.md) | Mandatory generation guidelines |
 | [HEALTHKIT.md](HEALTHKIT.md) | HealthKit action schemas and examples |
 | [CONTROL_FLOW.md](CONTROL_FLOW.md) | Repeat, conditional, and menu patterns |
-| [AUTOMATION_TRIGGERS.md](AUTOMATION_TRIGGERS.md) | OS 27 ToolKit automation trigger metadata for research/sample requests |
+| [AUTOMATION_TRIGGERS.md](AUTOMATION_TRIGGERS.md) | OS 27 ToolKit automation trigger metadata plus exported `WFWorkflowTriggers` samples for automation shortcuts |
 | [FILTERS.md](FILTERS.md) | Filter action predicates |
 | [VARIABLES.md](VARIABLES.md) | Variable reference patterns |
 | [ICONS_AND_COLORS.md](ICONS_AND_COLORS.md) | Icon glyph and color selection |
@@ -62,6 +62,7 @@ If `shortcuts sign` reports that a validator-clean plist "isn't in the correct f
 | `data/toolkit-v78-first-party-parameter-keys.json` | Target-gated OS 27 first-party parameter-key/name/type catalog for AppIntent schema checks |
 | `data/toolkit-v78-first-party-enum-cases.json` | Static OS 27 enum-case catalog for ToolKit action and trigger parameter type names |
 | `data/toolkit-v78-trigger-parameter-keys.json` | OS 27 ToolKit automation trigger IDs, Python names, parameter keys, and output types |
+| `data/macos27-workflow-trigger-samples.json` | Sanitized exported `WFWorkflowTriggers` samples for OS 27 automation headers |
 | `data/macos27-shortpy-grounding.json` | Reviewed static Apple-derived grounding catalog for macOS 27 action schemas and Shortpy names |
 | `data/healthkit-ios26.2-reference.json` | HealthKit types, category values, workout types, and units |
 

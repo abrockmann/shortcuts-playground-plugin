@@ -2,8 +2,9 @@
 """Look up reviewed Apple-derived Shortcuts grounding metadata.
 
 This helper reads the packaged static macOS 27 Shortpy catalog plus compact
-ToolKit v78 first-party parameter-key and enum-case snapshots. It never reads
-the user's live Shortcuts databases and never calls private Apple frameworks.
+ToolKit v78 first-party parameter-key, enum-case, trigger, and exported
+workflow-trigger snapshots. It never reads the user's live Shortcuts databases
+and never calls private Apple frameworks.
 Use it as an authoring aid when a macOS 27 action or Apple Shortpy function
 name needs additional grounding beyond the markdown references.
 """
@@ -33,6 +34,7 @@ TOOLKIT_SNAPSHOT_MIN_MACOS_MAJOR = {
 }
 PARAMETER_CATALOG_MIN_MACOS_MAJOR = 27
 TRIGGER_CATALOG_MIN_MACOS_MAJOR = 27
+WORKFLOW_TRIGGER_CATALOG_MIN_MACOS_MAJOR = 27
 DEPRECATED_IDENTIFIER_NOTES = {
     "is.workflow.actions.getonscreencontent": (
         "Deprecated in ToolKit v78; use is.workflow.actions.getonscreencontext "
@@ -74,6 +76,10 @@ def trigger_catalog_path(base: Path | None = None) -> Path:
     return (base or skill_dir()) / "data/toolkit-v78-trigger-parameter-keys.json"
 
 
+def workflow_trigger_catalog_path(base: Path | None = None) -> Path:
+    return (base or skill_dir()) / "data/macos27-workflow-trigger-samples.json"
+
+
 def load_catalog(base: Path | None = None) -> dict[str, Any]:
     path = catalog_path(base)
     with path.open("r", encoding="utf-8") as handle:
@@ -98,6 +104,14 @@ def load_enum_catalog(base: Path | None = None) -> dict[str, Any]:
 
 def load_trigger_catalog(base: Path | None = None) -> dict[str, Any]:
     path = trigger_catalog_path(base)
+    if not path.exists():
+        return {"triggers": {}}
+    with path.open("r", encoding="utf-8") as handle:
+        return json.load(handle)
+
+
+def load_workflow_trigger_catalog(base: Path | None = None) -> dict[str, Any]:
+    path = workflow_trigger_catalog_path(base)
     if not path.exists():
         return {"triggers": {}}
     with path.open("r", encoding="utf-8") as handle:
@@ -246,8 +260,8 @@ def trigger_entry_to_grounding(identifier: str, entry: dict[str, Any]) -> dict[s
         "pythonName": entry.get("pythonName"),
         "summary": (
             "ToolKit v78 automation-trigger metadata. This proves the trigger "
-            "exists and names its parameters, but it is not an import-ready "
-            "automation plist schema."
+            "exists and names its parameters. When present, workflowTriggerSample "
+            "shows the exported WFWorkflowTriggers plist shape for OS 27 shortcut XML."
         ),
         "toolkitPlatforms": entry.get("platforms") or [],
         "toolkitTriggerSummary": {
@@ -453,6 +467,19 @@ def augment_with_enum_cases(
     return out
 
 
+def augment_with_workflow_trigger_sample(
+    identifier: str,
+    entry: dict[str, Any],
+    workflow_trigger_catalog: dict[str, Any],
+) -> dict[str, Any]:
+    sample = (workflow_trigger_catalog.get("triggers") or {}).get(identifier)
+    if not isinstance(sample, dict):
+        return entry
+    out = dict(entry)
+    out["workflowTriggerSample"] = sample
+    return out
+
+
 def find_parameter_by_identifier(
     parameter_catalog: dict[str, Any],
     value: str,
@@ -558,6 +585,16 @@ def entry_search_text(identifier: str, entry: dict[str, Any]) -> str:
                         " ".join(toolkit_parameter_type_names(parameter)),
                     ]
                 )
+    workflow_trigger = entry.get("workflowTriggerSample") or {}
+    if isinstance(workflow_trigger, dict):
+        parts.append("workflow triggers exported automation header")
+        parts.extend(workflow_trigger.get("notes") or [])
+        payload = workflow_trigger.get("workflowTrigger") or {}
+        if isinstance(payload, dict):
+            parts.append(str(payload.get("WFTriggerIdentifier") or ""))
+            serialized = payload.get("WFTriggerSerializedParameters") or {}
+            if isinstance(serialized, dict):
+                parts.extend(str(key) for key in serialized)
     return "\n".join(parts).lower()
 
 
@@ -753,6 +790,7 @@ def compact_entry(
         "toolkitToolType": entry.get("toolkitToolType"),
         "toolkitParameterSummary": entry.get("toolkitParameterSummary") or {},
         "toolkitTriggerSummary": entry.get("toolkitTriggerSummary") or {},
+        "workflowTriggerSample": entry.get("workflowTriggerSample") or {},
         "sourceFunctions": entry.get("sourceFunctions") or {},
         "sampleShortcuts": entry.get("sampleShortcuts") or [],
     }
@@ -854,6 +892,29 @@ def print_markdown_entry(
     if output_types:
         print()
         print("- Trigger output types: " + ", ".join(f"`{item}`" for item in output_types))
+    workflow_trigger = entry.get("workflowTriggerSample") or {}
+    if isinstance(workflow_trigger, dict) and workflow_trigger:
+        print()
+        observed = workflow_trigger.get("observed")
+        if observed is True:
+            print("- Workflow trigger sample: observed exported `WFWorkflowTriggers` payload")
+        elif observed is False:
+            print("- Workflow trigger sample: no exported `WFWorkflowTriggers` sample yet")
+        template_status = workflow_trigger.get("templateStatus")
+        if template_status:
+            print(f"- Template status: `{template_status}`")
+        payload = workflow_trigger.get("workflowTrigger") or {}
+        if isinstance(payload, dict):
+            wf_identifier = payload.get("WFTriggerIdentifier")
+            if wf_identifier:
+                print(f"- `WFTriggerIdentifier`: `{wf_identifier}`")
+            serialized = payload.get("WFTriggerSerializedParameters")
+            if isinstance(serialized, dict):
+                keys = ", ".join(f"`{key}`" for key in sorted(serialized))
+                print(f"- Serialized parameter keys: {keys if keys else 'none'}")
+        notes = workflow_trigger.get("notes") or []
+        if notes:
+            print("- Sample notes: " + " ".join(str(note) for note in notes))
 
 
 def markdown_cell(value: str) -> str:
@@ -924,6 +985,7 @@ def main() -> int:
     parameter_catalog = load_parameter_catalog()
     enum_catalog = load_enum_catalog()
     trigger_catalog = load_trigger_catalog()
+    workflow_trigger_catalog = load_workflow_trigger_catalog()
     availability = load_identifier_min_macos()
 
     results: list[tuple[str, dict[str, Any]]]
@@ -992,6 +1054,17 @@ def main() -> int:
         (identifier, augment_with_enum_cases(entry, enum_catalog))
         for identifier, entry in results
     ]
+    results = [
+        (
+            identifier,
+            augment_with_workflow_trigger_sample(
+                identifier,
+                entry,
+                workflow_trigger_catalog,
+            ),
+        )
+        for identifier, entry in results
+    ]
 
     if args.json:
         result_notes = [
@@ -1035,6 +1108,17 @@ def main() -> int:
                 "version": enum_catalog.get("version"),
                 "enumTypeCount": enum_catalog.get("enumTypeCount"),
                 "caseCount": enum_catalog.get("caseCount"),
+            },
+            "workflowTriggerCatalog": {
+                "version": workflow_trigger_catalog.get("version"),
+                "rootKey": workflow_trigger_catalog.get("rootKey"),
+                "observedToolkitTriggerCount": workflow_trigger_catalog.get(
+                    "observedToolkitTriggerCount"
+                ),
+                "unobservedToolkitTriggerCount": workflow_trigger_catalog.get(
+                    "unobservedToolkitTriggerCount"
+                ),
+                "minimumMacOSMajor": WORKFLOW_TRIGGER_CATALOG_MIN_MACOS_MAJOR,
             },
             "targetMacOSMajor": target_macos,
             "targetPlatform": target_platform_label(target_platform),
