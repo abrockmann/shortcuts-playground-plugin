@@ -1617,6 +1617,13 @@ def _literal_enum_values(value) -> list[str]:
         return [stripped] if stripped else []
     if isinstance(value, int):
         return [str(value)]
+    if isinstance(value, dict):
+        values: list[str] = []
+        for key in ("value", "identifier"):
+            item = value.get(key)
+            if isinstance(item, str) and item.strip():
+                values.append(item.strip())
+        return sorted(set(values))
     if isinstance(value, list):
         values: list[str] = []
         for item in value:
@@ -3303,10 +3310,18 @@ def validate(
 
         if ident == "com.apple.ShortcutsActions.SetMultitaskingModeAction":
             mode = params.get("mode")
-            if not _token_param_is_empty(mode) and mode not in MULTITASKING_MODES:
-                errors.append(
-                    f"Set Multitasking Mode has unknown mode at index {idx}: {mode!r}"
-                )
+            if not _token_param_is_empty(mode) and not _parameter_is_dynamic_attachment(mode):
+                mode_values = _literal_enum_values(mode)
+                if not mode_values:
+                    errors.append(
+                        f"Set Multitasking Mode has unsupported mode shape at index {idx}: {mode!r}"
+                    )
+                else:
+                    for mode_value in mode_values:
+                        if mode_value not in MULTITASKING_MODES:
+                            errors.append(
+                                f"Set Multitasking Mode has unknown mode at index {idx}: {mode_value!r}"
+                            )
 
         if ident == "is.workflow.actions.openapp":
             windowing_format = params.get("WFWindowingFormat")

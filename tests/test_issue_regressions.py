@@ -537,7 +537,6 @@ class ToolkitSnapshotTests(unittest.TestCase):
                 macos_enum_cases["com.apple.NanoSettings.NPRFSetAlwaysOnIntent"]["operation"],
                 rel_path,
             )
-
     def test_toolkit_enum_and_boolean_validation_covers_classic_wf_actions(self) -> None:
         invalid_plist = {
             "WFWorkflowActions": [
@@ -1747,6 +1746,17 @@ class ToolkitSnapshotTests(unittest.TestCase):
                     },
                 },
                 {
+                    "WFWorkflowActionIdentifier": "com.apple.ShortcutsActions.SetMultitaskingModeAction",
+                    "WFWorkflowActionParameters": {
+                        "mode": {
+                            "identifier": "splitView",
+                            "value": "splitView",
+                            "title": {"key": "Split View"},
+                            "subtitle": {"key": "Split View"},
+                        },
+                    },
+                },
+                {
                     "WFWorkflowActionIdentifier": "is.workflow.actions.getdistance",
                     "WFWorkflowActionParameters": {
                         "WFGetDirectionsActionMode": "Flying",
@@ -1843,6 +1853,19 @@ class ToolkitSnapshotTests(unittest.TestCase):
                         "mode": "stageManager",
                         "automaticallyShowAndHideDock": True,
                         "showRecentApps": False,
+                    },
+                },
+                {
+                    "WFWorkflowActionIdentifier": "com.apple.ShortcutsActions.SetMultitaskingModeAction",
+                    "WFWorkflowActionParameters": {
+                        "mode": {
+                            "identifier": "windowedApps",
+                            "value": "windowedApps",
+                            "title": {"key": "Windowed Apps"},
+                            "subtitle": {"key": "Windowed Apps"},
+                            "symbol": {"systemName": "macwindow.on.rectangle"},
+                        },
+                        "automaticallyShowAndHideDock": False,
                     },
                 },
                 {
@@ -2499,6 +2522,16 @@ class AppleGroundingCatalogTests(unittest.TestCase):
                 "off",
                 "both",
             },
+            "com_apple_shortcuts_wfexternal_display_trigger_wfconnection_type": {
+                "connect",
+                "disconnect",
+                "both",
+            },
+            "com_apple_shortcuts_wfstage_manager_trigger_wfstage_manager_type": {
+                "on",
+                "off",
+                "both",
+            },
             "com_apple_mobile_sms_tapback": {
                 "2000",
                 "2001",
@@ -2614,7 +2647,8 @@ class AppleGroundingCatalogTests(unittest.TestCase):
             self.assertEqual("macos27-workflow-trigger-samples", catalog["version"], rel_path)
             self.assertEqual("WFWorkflowTriggers", catalog["rootKey"], rel_path)
             self.assertIn("Do not read from or write to the live Shortcuts database", catalog["policy"], rel_path)
-            self.assertEqual(37, catalog["observedToolkitTriggerCount"], rel_path)
+            self.assertEqual(39, catalog["observedToolkitTriggerCount"], rel_path)
+            self.assertEqual(3, catalog["unobservedToolkitTriggerCount"], rel_path)
             self.assertEqual(42, len(catalog["triggers"]), rel_path)
 
             low_power = catalog["triggers"][
@@ -2647,10 +2681,30 @@ class AppleGroundingCatalogTests(unittest.TestCase):
             )
 
             display = catalog["triggers"]["com.apple.shortcuts.WFExternalDisplayTrigger."]
-            self.assertFalse(display["observed"], rel_path)
-            self.assertEqual("unobserved-export-needed", display["templateStatus"], rel_path)
-            self.assertIsNone(
+            self.assertTrue(display["observed"], rel_path)
+            self.assertEqual("copyable-with-fresh-uuid", display["templateStatus"], rel_path)
+            self.assertEqual(
+                {"WFConnectionType": "both"},
                 display["workflowTrigger"]["WFTriggerSerializedParameters"],
+                rel_path,
+            )
+            self.assertEqual(
+                {"connect", "disconnect", "both"},
+                set(display["serializedParameterShape"]["WFConnectionType"]["allowedValues"]),
+                rel_path,
+            )
+
+            stage_manager = catalog["triggers"]["com.apple.shortcuts.WFStageManagerTrigger.on"]
+            self.assertTrue(stage_manager["observed"], rel_path)
+            self.assertEqual("copyable-with-fresh-uuid", stage_manager["templateStatus"], rel_path)
+            self.assertEqual(
+                {"WFStageManagerType": "both"},
+                stage_manager["workflowTrigger"]["WFTriggerSerializedParameters"],
+                rel_path,
+            )
+            self.assertEqual(
+                {"on", "off", "both"},
+                set(stage_manager["serializedParameterShape"]["WFStageManagerType"]["allowedValues"]),
                 rel_path,
             )
 
@@ -3009,7 +3063,7 @@ class AppleGroundingCatalogTests(unittest.TestCase):
                     sys.executable,
                     str(REPO_ROOT / rel_path),
                     "--identifier",
-                    "com.apple.shortcuts.WFExternalDisplayTrigger.",
+                    "com.apple.shortcuts.WFDiskMountTrigger.external_drive",
                     "--target-macos",
                     "27",
                     "--json",

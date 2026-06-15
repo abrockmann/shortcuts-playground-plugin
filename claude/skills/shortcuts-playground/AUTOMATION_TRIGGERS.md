@@ -9,8 +9,8 @@ Use this only when the user explicitly asks for an OS 27 automation shortcut or 
 - ToolKit trigger metadata: `data/toolkit-v78-trigger-parameter-keys.json`
 - Exported workflow trigger samples: `data/macos27-workflow-trigger-samples.json`
 - ToolKit trigger variants: 42
-- Variants with exported `WFWorkflowTriggers` samples: 37
-- Missing exported samples: 5
+- Variants with exported `WFWorkflowTriggers` samples: 39
+- Missing exported samples: 3
 - Minimum target: macOS/iOS 27
 
 The lookup helper surfaces both ToolKit trigger parameters and exported plist samples:
@@ -54,6 +54,8 @@ Rules:
 ## Observed Defaults
 
 - Change-style triggers serialize on/off or connect/disconnect as `both`.
+- Display uses `WFConnectionType` values `connect`, `disconnect`, or `both`.
+- Stage Manager uses `WFStageManagerType` values `on`, `off`, or `both`.
 - Wi-Fi connect-to-any can omit serialized parameters; Wi-Fi disconnect uses `WFConnectionType = disconnected`.
 - Sleep Bedtime Begins uses `WFSleepMode = bedtime`.
 - Time of Day sunrise/sunset use `WFTimeEvent = sunrise` / `sunset`; the observed at-time sample stores `WFTime` as a plist date.
@@ -81,6 +83,7 @@ Observed support means the shortcut header can be generated and imported from ex
 | Bluetooth selected connection changes | `when_bluetooth_selected_connection_changes` | requires user values |
 | CarPlay changes | `when_car_play_changes` | copyable with fresh UUID |
 | Charger changes | `when_charger_changes` | copyable with fresh UUID |
+| Display / external display connected, disconnected, or changes | `when_display_wfexternaldisplaytrigger` | copyable with fresh UUID |
 | Email senders are | `when_email_senders_are` | requires user values |
 | Email senders are and subject contains | `when_email_senders_are_and_subject_contains` | requires user values |
 | Email subject contains | `when_email_subject_contains` | requires user values |
@@ -97,6 +100,7 @@ Observed support means the shortcut header can be generated and imported from ex
 | Screenshot saved | `when_screenshot_saved` | copyable with fresh UUID |
 | Sleep | `when_sleep_wfsleeptrigger` | copyable with fresh UUID |
 | Sound Recognition | `when_sound_recognition_sound_recognition` | requires user values |
+| Stage Manager turns on, turns off, or changes | `when_stage_manager_on` | copyable with fresh UUID |
 | Time of Day around sunrise | `when_time_of_day_around_sunrise_on_recurring_day` | copyable with fresh UUID |
 | Time of Day around sunset | `when_time_of_day_around_sunset_on_recurring_day` | copyable with fresh UUID |
 | Time of Day at time | `when_time_of_day_at_time_on_recurring_day` | copyable with fresh UUID |
@@ -108,11 +112,9 @@ Observed support means the shortcut header can be generated and imported from ex
 
 These variants still need exported automation-bearing XML before the plugin should generate them:
 
-- Display / external display: `when_display_wfexternaldisplaytrigger`
 - External Drive: `when_external_drive_external_drive`
 - File Modified: `when_file_file_modified`
 - Folder Changed: `when_folder_folder_changed`
-- Stage Manager On: `when_stage_manager_on`
 
 ## Validation
 

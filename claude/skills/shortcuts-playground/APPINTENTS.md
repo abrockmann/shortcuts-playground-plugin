@@ -45,7 +45,7 @@ These entries document authoring metadata. They do not prove runtime availabilit
 |--------------|------------|--------|---------------------|
 | Set Battery Charge Limit | `com.apple.ShortcutsActions.SetBatteryChargeLimitAction` | macOS 27 v78 + iOS 27 Simulator v78 | `limit`, `setUntilTomorrow`; Automators reports this was added in OS 26.4. |
 | Get Multitasking Mode | `com.apple.ShortcutsActions.GetMultitaskingModeAction` | macOS 27 v78 + iOS 27 Simulator v78 | none; Automators reports this was added in OS 26.4. |
-| Set Multitasking Mode | `com.apple.ShortcutsActions.SetMultitaskingModeAction` | macOS 27 v78 + iOS 27 Simulator v78 | `mode`, `automaticallyShowAndHideDock`, `showRecentApps`; mode cases are `fullScreenApps`, `stageManager`, `windowedApps`. |
+| Set Multitasking Mode | `com.apple.ShortcutsActions.SetMultitaskingModeAction` | macOS 27 v78 + iOS 27 Simulator v78; exported Stage Manager automation sample | `mode`, `automaticallyShowAndHideDock`, `showRecentApps`; mode cases are `fullScreenApps`, `stageManager`, `windowedApps`. Apple may serialize `mode` as an AppEnum-style dictionary with `identifier`/`value` plus localized `title`/`subtitle`; accept that shape as well as a bare literal. |
 | Share and Collaborate | `com.apple.sociallayerd.CollaborationIntent` | macOS 27 v78 + iOS 27 Simulator v78 | `recipients` |
 | Share | `com.apple.SharingUIService.ShareIntent` | iOS 27 Simulator v78 | `shareTransport`, `recipients`, `mode`, `content` |
 | Create Note | `com.apple.mobilenotes.SharingExtension` | macOS 27 v78 | `name`, `contents`, `folder`, `interpretAsMarkdown`, `OpenWhenRun` |

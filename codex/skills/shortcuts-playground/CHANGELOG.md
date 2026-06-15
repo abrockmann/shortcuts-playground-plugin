@@ -1,5 +1,20 @@
 # Autoresearch Loop Changelog
 
+## Date: June 15, 2026 - Display and Stage Manager automation exports
+
+### Summary
+
+Added support for the newly exported Display and Stage Manager OS 27 automation headers and validated Apple's exported Set Multitasking Mode dictionary form.
+
+### Fixes Applied
+
+- Updated `data/macos27-workflow-trigger-samples.json` from 37 to 39 observed ToolKit trigger variants, leaving only External Drive, File Modified, and Folder Changed sample-gated.
+- Added Display automation support via `WFExternalDisplayTrigger` with `WFConnectionType` values `connect`, `disconnect`, and `both`.
+- Added Stage Manager automation support via `WFStageManagerTrigger` with `WFStageManagerType` values `on`, `off`, and `both`.
+- Documented the exported Display and Stage Manager trigger values in `AUTOMATION_TRIGGERS.md` for deterministic OS 27 authoring.
+- Taught `validate_shortcut.py` to accept Apple's AppEnum-style `Set Multitasking Mode` `mode` dictionary shape (`identifier`/`value` plus localized title metadata), not just bare string literals.
+- Documented the Stage Manager export evidence for `com.apple.ShortcutsActions.SetMultitaskingModeAction` in `APPINTENTS.md`.
+
 ## Date: June 14, 2026 - macOS/iOS 27 exported automation headers
 
 ### Summary
