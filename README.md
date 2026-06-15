@@ -18,14 +18,13 @@ A project by [Federico Viticci](https://www.macstories.net). Read more [here](ht
 
 ## Current Release
 
-**v1.2.0** adds early, opt-in macOS/iOS 27 support while keeping macOS 26 users on the existing validation surface by default.
+**v1.2.1** extends the early, opt-in macOS/iOS 27 support while keeping macOS 26 users on the existing validation surface by default.
 
 - macOS/iOS 27 ToolKit v78 action snapshots, parameter catalogs, enum catalogs, trigger metadata, and sanitized exported `WFWorkflowTriggers` samples ship as static JSON; users do not need macOS 27 or private Apple frameworks installed.
 - New OS 27-era authoring coverage includes Stored Content, Add Item to List, Otherwise If, Get Selected Text, Get What's On Screen, VPN actions, Notes markdown, Safari tab groups, route options, and several AppIntent parameter/enum updates.
+- The OS 27 automation header catalog includes exported Display and Stage Manager samples plus conservative External Drive, File Modified, and Folder Changed coverage. Display and Stage Manager have copyable headers; current Mac drive/file/folder exports are documented as lossy and require manual picker configuration in Shortcuts.
 - Validators now catch more blank fields, wrong input keys, bad enum values, invalid boolean parameters, AppIntent schema typos, conditional wiring errors, and signing/import pitfalls across both Claude Code and Codex.
 - OS 27-only identifiers and parameters require `target_macos = "27"` / `SHORTCUTS_PLAYGROUND_TARGET_MACOS=27`; default validation remains conservative for existing macOS 26 users.
-
-On `main` after 1.2.0, the unreleased OS 27 automation header catalog also includes exported Display, Stage Manager, External Drive, File Modified, and Folder Changed samples. Display and Stage Manager have copyable headers; the current Mac drive/file/folder exports are documented as lossy and require manual picker configuration in Shortcuts.
 
 ---
 

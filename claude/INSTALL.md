@@ -49,7 +49,7 @@ Confirm the install worked:
 claude plugin list | grep shortcuts-playground
 ```
 
-You should see a line like `shortcuts-playground@shortcuts-playground  Version: 1.2.0  ✔ enabled`.
+You should see a line like `shortcuts-playground@shortcuts-playground  Version: 1.2.1  ✔ enabled`.
 
 ## Verify it works (strongly recommended)
 
@@ -175,8 +175,9 @@ Your `~/Documents/Shortcuts Playground/` directory stays intact — the plugin n
 
 ## Release notes
 
-You're installing **v1.2.0**. The full CHANGELOG is in the repo. Big recent changes:
+You're installing **v1.2.1**. The full CHANGELOG is in the repo. Big recent changes:
 
+- **v1.2.1** — exported OS 27 automation header coverage for Display and Stage Manager, plus conservative Mac External Drive, File Modified, and Folder Changed handling that rejects lossy bare headers instead of presenting them as import-ready.
 - **v1.2.0** — early, target-gated macOS/iOS 27 support with ToolKit v78 action snapshots, AppIntent parameter and enum validation, OS 27 trigger metadata and exported `WFWorkflowTriggers` samples for automation shortcuts, Stored Content/Add Item to List/Otherwise If/VPN/on-screen-context coverage, stronger random stress testing, and safer signing wrappers.
 
 - **v1.1.0** — issue-regression hardening across Claude and Codex, HealthKit label fixes, improved signing wrappers, and stronger validator guidance.

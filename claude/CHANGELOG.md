@@ -4,6 +4,10 @@ All notable changes to the Shortcuts Playground plugin are documented in this fi
 
 ## Unreleased
 
+- Nothing yet.
+
+## [1.2.1] — 2026-06-15
+
 - Added exported OS 27 automation header coverage for Display and Stage Manager, plus research coverage for External Drive, File Modified, and Folder Changed.
 - Mac-specific drive/file/folder trigger support is intentionally conservative: current exports do not serialize required picker state into `WFWorkflowTriggers`, so bare generated headers are rejected instead of being treated as import-ready.
 
