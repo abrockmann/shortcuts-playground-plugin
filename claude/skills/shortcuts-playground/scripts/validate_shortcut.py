@@ -2088,6 +2088,15 @@ WORKFLOW_TRIGGER_KEYS = {
     "WFTriggerSerializedParameters",
     "WFTriggerUUID",
 }
+WORKFLOW_TRIGGER_IDENTIFIERS_REQUIRING_EDITOR_CONFIGURATION = {
+    # OS 27 exports these as bare WFWorkflowTriggers dictionaries, but the
+    # Shortcuts editor marks those imports invalid until picker state is created
+    # inside the app. The file/folder/drive selection is stored outside the
+    # portable trigger dictionary, so XML generation cannot safely synthesize it.
+    "WFDiskMountTrigger",
+    "WFFileTrigger",
+    "WFFolderTrigger",
+}
 
 
 def _contains_catalog_placeholder(value) -> bool:
@@ -2170,6 +2179,13 @@ def _validate_workflow_triggers(
                 "replace local picker payloads with user-provided/exported values before signing."
             )
         if isinstance(wf_identifier, str):
+            if wf_identifier in WORKFLOW_TRIGGER_IDENTIFIERS_REQUIRING_EDITOR_CONFIGURATION:
+                errors.append(
+                    f"{prefix}.{wf_identifier} cannot currently be generated as portable "
+                    "WFWorkflowTriggers XML. macOS 27 exports a lossy empty trigger dictionary, "
+                    "but Shortcuts stores the required picker state outside that dictionary and "
+                    "imports the bare header as an invalid automation."
+                )
             expected_keys = serialized_keys_by_identifier.get(wf_identifier, set())
             if isinstance(expected_keys, set) and expected_keys:
                 unknown = sorted(key for key in serialized if key not in expected_keys)

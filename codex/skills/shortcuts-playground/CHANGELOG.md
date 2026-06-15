@@ -1,5 +1,20 @@
 # Autoresearch Loop Changelog
 
+## Date: June 15, 2026 - Mac-specific automation exports
+
+### Summary
+
+Added exported OS 27 automation header research coverage for Mac-specific External Drive, File Modified, and Folder Changed triggers, and blocked lossy bare imports from validating as production shortcuts.
+
+### Fixes Applied
+
+- Updated `data/macos27-workflow-trigger-samples.json` from 39 to 42 observed ToolKit trigger variants, leaving no ToolKit trigger variants without an exported sample.
+- Recorded External Drive via `WFDiskMountTrigger` with an empty serialized-parameters dictionary from the exported Specific Drive Disconnected samples.
+- Recorded File Modified via `WFFileTrigger` with an empty serialized-parameters dictionary from the exported File Modified sample.
+- Recorded Folder Changed via `WFFolderTrigger` with an empty serialized-parameters dictionary from exported Item Added, Item Removed, and Item Modified folder samples.
+- Verified in the macOS 27 Shortcuts editor that bare External Drive, File Modified, and Folder Changed imports render as invalid automations because required picker state is stored outside the portable `WFWorkflowTriggers` dictionary.
+- Marked the three Mac picker triggers as `requires-user-values` and updated validator regression coverage so generated bare carriers fail before signing.
+
 ## Date: June 15, 2026 - Display and Stage Manager automation exports
 
 ### Summary

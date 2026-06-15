@@ -293,6 +293,25 @@ class ToolkitSnapshotTests(unittest.TestCase):
                 f"{rel_path}: {bad_key_errors}",
             )
 
+            for picker_identifier in (
+                "WFDiskMountTrigger",
+                "WFFileTrigger",
+                "WFFolderTrigger",
+            ):
+                picker_trigger = {
+                    "WFTriggerIdentifier": picker_identifier,
+                    "WFTriggerSerializedParameters": {},
+                    "WFTriggerUUID": "4F9319DF-F6D4-41A2-A549-8DDB157404D7",
+                }
+                picker_errors, _ = module.validate(
+                    base_plist(picker_trigger),
+                    **common_kwargs,
+                )
+                self.assertTrue(
+                    any("lossy empty trigger dictionary" in error for error in picker_errors),
+                    f"{rel_path}: {picker_identifier}: {picker_errors}",
+                )
+
     def test_ios27_toolkit_ids_require_ios_or_all_target_platform(self) -> None:
         for rel_path in (
             "claude/skills/shortcuts-playground/scripts/validate_shortcut.py",
@@ -2647,8 +2666,8 @@ class AppleGroundingCatalogTests(unittest.TestCase):
             self.assertEqual("macos27-workflow-trigger-samples", catalog["version"], rel_path)
             self.assertEqual("WFWorkflowTriggers", catalog["rootKey"], rel_path)
             self.assertIn("Do not read from or write to the live Shortcuts database", catalog["policy"], rel_path)
-            self.assertEqual(39, catalog["observedToolkitTriggerCount"], rel_path)
-            self.assertEqual(3, catalog["unobservedToolkitTriggerCount"], rel_path)
+            self.assertEqual(42, catalog["observedToolkitTriggerCount"], rel_path)
+            self.assertEqual(0, catalog["unobservedToolkitTriggerCount"], rel_path)
             self.assertEqual(42, len(catalog["triggers"]), rel_path)
 
             low_power = catalog["triggers"][
@@ -2707,6 +2726,30 @@ class AppleGroundingCatalogTests(unittest.TestCase):
                 set(stage_manager["serializedParameterShape"]["WFStageManagerType"]["allowedValues"]),
                 rel_path,
             )
+
+            mac_trigger_expectations = {
+                "com.apple.shortcuts.WFDiskMountTrigger.external_drive": "WFDiskMountTrigger",
+                "com.apple.shortcuts.WFFileTrigger.file_modified": "WFFileTrigger",
+                "com.apple.shortcuts.WFFolderTrigger.folder_changed": "WFFolderTrigger",
+            }
+            for trigger_id, workflow_identifier in mac_trigger_expectations.items():
+                trigger = catalog["triggers"][trigger_id]
+                self.assertTrue(trigger["observed"], rel_path)
+                self.assertEqual("requires-user-values", trigger["templateStatus"], rel_path)
+                self.assertTrue(
+                    any("outside the portable WFWorkflowTriggers dictionary" in note for note in trigger["notes"]),
+                    f"{rel_path}: {trigger_id}: {trigger['notes']}",
+                )
+                self.assertEqual(
+                    workflow_identifier,
+                    trigger["workflowTrigger"]["WFTriggerIdentifier"],
+                    rel_path,
+                )
+                self.assertEqual(
+                    {},
+                    trigger["workflowTrigger"]["WFTriggerSerializedParameters"],
+                    rel_path,
+                )
 
             catalog_text = (REPO_ROOT / rel_path).read_text(encoding="utf-8")
             for private_token in (
@@ -3056,30 +3099,42 @@ class AppleGroundingCatalogTests(unittest.TestCase):
                 rel_path,
             )
 
-    def test_lookup_action_grounding_marks_unobserved_workflow_triggers(self) -> None:
+    def test_lookup_action_grounding_marks_mac_workflow_triggers_observed(self) -> None:
+        expectations = {
+            "com.apple.shortcuts.WFDiskMountTrigger.external_drive": "WFDiskMountTrigger",
+            "com.apple.shortcuts.WFFileTrigger.file_modified": "WFFileTrigger",
+            "com.apple.shortcuts.WFFolderTrigger.folder_changed": "WFFolderTrigger",
+        }
         for rel_path in self.LOOKUP_SCRIPTS:
-            result = subprocess.run(
-                [
-                    sys.executable,
-                    str(REPO_ROOT / rel_path),
-                    "--identifier",
-                    "com.apple.shortcuts.WFDiskMountTrigger.external_drive",
-                    "--target-macos",
-                    "27",
-                    "--json",
-                ],
-                capture_output=True,
-                text=True,
-                check=True,
-            )
-            payload = json.loads(result.stdout)
-            sample = payload["results"][0]["workflowTriggerSample"]
-            self.assertFalse(sample["observed"], rel_path)
-            self.assertEqual("unobserved-export-needed", sample["templateStatus"], rel_path)
-            self.assertIsNone(
-                sample["workflowTrigger"]["WFTriggerSerializedParameters"],
-                rel_path,
-            )
+            for trigger_id, workflow_identifier in expectations.items():
+                result = subprocess.run(
+                    [
+                        sys.executable,
+                        str(REPO_ROOT / rel_path),
+                        "--identifier",
+                        trigger_id,
+                        "--target-macos",
+                        "27",
+                        "--json",
+                    ],
+                    capture_output=True,
+                    text=True,
+                    check=True,
+                )
+                payload = json.loads(result.stdout)
+                sample = payload["results"][0]["workflowTriggerSample"]
+                self.assertTrue(sample["observed"], rel_path)
+                self.assertEqual("requires-user-values", sample["templateStatus"], rel_path)
+                self.assertEqual(
+                    workflow_identifier,
+                    sample["workflowTrigger"]["WFTriggerIdentifier"],
+                    rel_path,
+                )
+                self.assertEqual(
+                    {},
+                    sample["workflowTrigger"]["WFTriggerSerializedParameters"],
+                    rel_path,
+                )
 
     def test_lookup_action_grounding_marks_ios_only_parameter_catalog_entries(self) -> None:
         expected_note = (

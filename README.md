@@ -25,6 +25,8 @@ A project by [Federico Viticci](https://www.macstories.net). Read more [here](ht
 - Validators now catch more blank fields, wrong input keys, bad enum values, invalid boolean parameters, AppIntent schema typos, conditional wiring errors, and signing/import pitfalls across both Claude Code and Codex.
 - OS 27-only identifiers and parameters require `target_macos = "27"` / `SHORTCUTS_PLAYGROUND_TARGET_MACOS=27`; default validation remains conservative for existing macOS 26 users.
 
+On `main` after 1.2.0, the unreleased OS 27 automation header catalog also includes exported Display, Stage Manager, External Drive, File Modified, and Folder Changed samples. Display and Stage Manager have copyable headers; the current Mac drive/file/folder exports are documented as lossy and require manual picker configuration in Shortcuts.
+
 ---
 
 ## What It Does

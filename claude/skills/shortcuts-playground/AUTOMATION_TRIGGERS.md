@@ -9,8 +9,8 @@ Use this only when the user explicitly asks for an OS 27 automation shortcut or 
 - ToolKit trigger metadata: `data/toolkit-v78-trigger-parameter-keys.json`
 - Exported workflow trigger samples: `data/macos27-workflow-trigger-samples.json`
 - ToolKit trigger variants: 42
-- Variants with exported `WFWorkflowTriggers` samples: 39
-- Missing exported samples: 3
+- Variants with exported `WFWorkflowTriggers` samples: 42
+- Missing exported samples: 0
 - Minimum target: macOS/iOS 27
 
 The lookup helper surfaces both ToolKit trigger parameters and exported plist samples:
@@ -47,15 +47,20 @@ Rules:
 - Always generate a fresh `WFTriggerUUID` with `uuidgen | tr '[:lower:]' '[:upper:]'`.
 - Validate and sign with `--target-macos 27`.
 - Do not ship catalog placeholders such as `$placeholder`; they mark redacted local picker values.
-- Raw exported automation XML can contain user-local contact, Mail, Messages, account, app, location, and device payloads. Sanitize those values before adding samples to the plugin.
+- Raw exported automation XML can contain user-local contact, Mail, Messages, account, app, location, device, file, folder, and drive payloads. Sanitize those values before adding samples to the plugin.
 - Do not infer a trigger header from ToolKit metadata alone. Use `workflowTriggerSample` from the lookup helper or an exported shortcut from the user.
-- Local picker values such as apps, contacts, locations, alarms, devices, networks, Focus modes, Wallet merchants, and sounds must come from a user export or be selected manually in Shortcuts.
+- Local picker values such as apps, contacts, locations, alarms, devices, networks, Focus modes, Wallet merchants, sounds, files, folders, and drives must come from a complete user export format or be selected manually in Shortcuts. Current macOS 27 file/folder/drive exports are lossy and do not carry enough picker state in `WFWorkflowTriggers` alone.
 
 ## Observed Defaults
 
 - Change-style triggers serialize on/off or connect/disconnect as `both`.
 - Display uses `WFConnectionType` values `connect`, `disconnect`, or `both`.
 - Stage Manager uses `WFStageManagerType` values `on`, `off`, or `both`.
+- External Drive, File Modified, and Folder Changed export as bare trigger identifiers with empty serialized-parameters dictionaries, but those bare imports render as invalid automations in macOS 27 Shortcuts.
+- External Drive automation exports appear buggy or under-specified in the current OS 27 build: specific disconnected exports serialize only the generic `WFDiskMountTrigger` carrier, an Any Drive Connected export contained no trigger header, and importing the generic carrier rendered invalid despite visible default choices.
+- File Modified imports from the empty `WFFileTrigger` carrier render with no selected file.
+- Folder Item Added, Item Removed, Item Modified, and Ignore Subfolders choices exported with the same `WFFolderTrigger` header; those UI choices are not represented in the observed `WFWorkflowTriggers` payload. After manual editor configuration, folder path/bookmark state and event choices are stored outside the portable trigger dictionary.
+- The exported Any Drive Connected file did not include `WFWorkflowTriggers`, so the plugin should not infer a connected-only drive payload from it.
 - Wi-Fi connect-to-any can omit serialized parameters; Wi-Fi disconnect uses `WFConnectionType = disconnected`.
 - Sleep Bedtime Begins uses `WFSleepMode = bedtime`.
 - Time of Day sunrise/sunset use `WFTimeEvent = sunrise` / `sunset`; the observed at-time sample stores `WFTime` as a plist date.
@@ -87,7 +92,10 @@ Observed support means the shortcut header can be generated and imported from ex
 | Email senders are | `when_email_senders_are` | requires user values |
 | Email senders are and subject contains | `when_email_senders_are_and_subject_contains` | requires user values |
 | Email subject contains | `when_email_subject_contains` | requires user values |
+| External Drive | `when_external_drive_external_drive` | requires user values |
+| File Modified | `when_file_file_modified` | requires user values |
 | Focus enable | `when_focus_enable` | requires user values |
+| Folder Changed | `when_folder_folder_changed` | requires user values |
 | Keyboard connection changes | `when_keyboard_connection_changes` | copyable with fresh UUID |
 | Leave location | `when_leave_leave_location` | requires user values |
 | Leave location between times | `when_leave_leave_location_between` | requires user values |
@@ -110,11 +118,7 @@ Observed support means the shortcut header can be generated and imported from ex
 | Wi-Fi disconnect from any | `when_wi_fi_disconnect_from_any` | copyable with fresh UUID |
 | Wi-Fi disconnect from selected | `when_wi_fi_disconnect_from_selected` | requires user values |
 
-These variants still need exported automation-bearing XML before the plugin should generate them:
-
-- External Drive: `when_external_drive_external_drive`
-- File Modified: `when_file_file_modified`
-- Folder Changed: `when_folder_folder_changed`
+All 42 ToolKit trigger variants now have at least one exported `WFWorkflowTriggers` sample. Some user-local picker choices are intentionally absent from the portable header and must still come from a complete export format or manual Shortcuts selection. In the current macOS 27 build, External Drive, File Modified, and Folder Changed are observed but not copyable from `WFWorkflowTriggers` alone.
 
 ## Validation
 
