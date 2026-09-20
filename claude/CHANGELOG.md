@@ -6,6 +6,11 @@ All notable changes to the Shortcuts Playground plugin are documented in this fi
 
 - Nothing yet.
 
+## [1.2.1-agency.4] — 2026-09-20 (fork abrockmann/shortcuts-playground-plugin)
+
+- Format Date custom pattern: docs (agency.2) and validator (agency.3, .4) now require `WFDateFormatStyle=Custom` with the pattern in `WFDateFormat`; `WFDateFormatString` and `WFDateFormat=Custom` are rejected because that shape renders the date empty on device. Details in `skills/shortcuts-playground/CHANGELOG.md`.
+- agency.1: agent prompts no longer fall back to `~/Documents/Shortcuts Playground` when `output_dir` is configured (sentinel matched its own substituted value; upstream PR #23).
+
 ## [1.2.1] — 2026-06-15
 
 - Added exported OS 27 automation header coverage for Display and Stage Manager, plus research coverage for External Drive, File Modified, and Folder Changed.

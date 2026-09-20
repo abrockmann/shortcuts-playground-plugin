@@ -1,5 +1,17 @@
 # Autoresearch Loop Changelog
 
+## Date: September 20, 2026 - Format Date custom pattern (fork 1.2.1-agency.2 to .4)
+
+### Summary
+
+A Format Date built as the docs prescribed (`WFDateFormat=Custom`, pattern in `WFDateFormatString`) validated, imported, and resolved the date **empty** on device. Shortcuts writes `WFDateFormatStyle=Custom` with the pattern itself in `WFDateFormat`; the runtime ignores `WFDateFormatString` (already recorded below under "WFDateFormat vs WFDateFormatString", whose "include BOTH" fix is superseded).
+
+### Fixes Applied
+
+- `DATE_TIME.md`, `SKILL.md` rule 27, `PARAMETER_TYPES.md`, `BEST_PRACTICES.md`: pattern goes in `WFDateFormat`; never emit `WFDateFormatString` or `WFDateFormat=Custom` (agency.2).
+- `validate_shortcut.py`: errors on `WFDateFormatString` (ignored at runtime) and on `WFDateFormat=Custom` (not a pattern); the empty-pattern check, the style check (a pattern needs `WFDateFormatStyle=Custom`) and the Start/End Date date-only heuristics read the pattern from `WFDateFormat` (agency.3, .4). Breaking for files that carried the old shape — they were broken on device already.
+- `test_random_mixed_shortcuts.py` generates the correct shape; `test_wiring_regressions.py` gains the `format-date` group, including the preset-style, time-only and pattern-from-variable shapes that must stay valid.
+
 ## Date: June 15, 2026 - Mac-specific automation exports
 
 ### Summary
@@ -440,6 +452,7 @@ Applied Karpathy's autoresearch methodology to iteratively improve the generate-
 - **Root cause:** The Format Date action reads `WFDateFormat` for the custom format pattern at runtime. `WFDateFormatString` is accepted by the validator and imports without error, but the runtime ignores it.
 - **Fix:** Include BOTH `WFDateFormat` AND `WFDateFormatString` with the same pattern for maximum compatibility. 127-shortcut analysis found 23 using only WFDateFormat, 15 using only WFDateFormatString, 8 using both.
 - **Runtime confirmed:** ✅ Shortcut #1 correctly displays "March 24, 2026" after fix.
+- **Superseded 2026-09-20 (fork 1.2.1-agency.3/.4):** the "include BOTH" rule is history, not guidance. The 127 shortcuts were generated, not written by Shortcuts; Shortcuts itself writes only `WFDateFormatStyle=Custom` + the pattern in `WFDateFormat`. The validator now rejects any `WFDateFormatString` and `WFDateFormat=Custom` — see the 2026-09-20 entry at the top of this file.
 
 #### 2. Notes action content key (markdownContents)
 - **Discovered in:** Shortcut #5 (Create Note)

@@ -520,6 +520,47 @@ def make_format_date_pattern_without_style_invalid(case_name: str) -> tuple[dict
     return plist, "custom style must be set to Custom"
 
 
+def make_format_date_pattern_with_short_style_invalid(case_name: str) -> tuple[dict, str]:
+    # Pattern present but ignored: a non-Custom style renders its preset instead.
+    plist = make_format_date_custom_valid(case_name)
+    _format_date_params(plist)["WFDateFormatStyle"] = "Short"
+    return plist, "custom style must be set to Custom"
+
+
+def make_format_date_preset_style_valid(case_name: str) -> dict:
+    # Shape Shortcuts writes for a preset style: no WFDateFormat at all.
+    plist = make_format_date_custom_valid(case_name)
+    params = _format_date_params(plist)
+    del params["WFDateFormat"]
+    params["WFDateFormatStyle"] = "Medium"
+    params["WFTimeFormatStyle"] = "None"
+    return plist
+
+
+def make_format_date_time_only_valid(case_name: str) -> dict:
+    plist = make_format_date_custom_valid(case_name)
+    params = _format_date_params(plist)
+    del params["WFDateFormat"]
+    del params["WFDateFormatStyle"]
+    params["WFTimeFormatStyle"] = "Short"
+    return plist
+
+
+def make_format_date_pattern_from_variable_valid(case_name: str) -> dict:
+    # A variable inserted into the custom-format field serializes as a token string.
+    plist = make_format_date_custom_valid(case_name)
+    ask_uuid = seeded_uuid(f"{case_name}-pattern-ask")
+    plist["WFWorkflowActions"].insert(
+        -2,
+        {
+            "WFWorkflowActionIdentifier": "is.workflow.actions.ask",
+            "WFWorkflowActionParameters": {"UUID": ask_uuid, "WFAskActionPrompt": "Date pattern?"},
+        },
+    )
+    _format_date_params(plist)["WFDateFormat"] = token_string_action_output(ask_uuid, "Provided Input")
+    return plist
+
+
 def make_format_date_start_date_time_invalid(case_name: str) -> tuple[dict, str]:
     plist = make_format_date_custom_valid(case_name, variable_name="Start Date")
     _format_date_params(plist)["WFDateFormat"] = "yyyy-MM-dd'T'HH:mm"
@@ -2034,11 +2075,18 @@ def build_cases() -> list[Case]:
         )
     )
     for name, maker in [
+        ("ZZ-Format-Date-Preset-Style-Valid", make_format_date_preset_style_valid),
+        ("ZZ-Format-Date-Time-Only-Valid", make_format_date_time_only_valid),
+        ("ZZ-Format-Date-Pattern-From-Variable-Valid", make_format_date_pattern_from_variable_valid),
+    ]:
+        cases.append(Case("format-date", name, maker(name), True))
+    for name, maker in [
         ("ZZ-Format-Date-Legacy-Shape-Invalid", make_format_date_legacy_shape_invalid),
         ("ZZ-Format-Date-Stray-Format-String-Invalid", make_format_date_stray_format_string_invalid),
         ("ZZ-Format-Date-Custom-Keyword-Invalid", make_format_date_custom_keyword_invalid),
         ("ZZ-Format-Date-Custom-Empty-Invalid", make_format_date_custom_empty_invalid),
         ("ZZ-Format-Date-Pattern-Without-Style-Invalid", make_format_date_pattern_without_style_invalid),
+        ("ZZ-Format-Date-Pattern-With-Short-Style-Invalid", make_format_date_pattern_with_short_style_invalid),
         ("ZZ-Format-Date-Start-Date-Time-Invalid", make_format_date_start_date_time_invalid),
         ("ZZ-Format-Date-Custom-Output-Time-Invalid", make_format_date_custom_output_time_invalid),
     ]:

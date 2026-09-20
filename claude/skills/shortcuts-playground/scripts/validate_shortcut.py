@@ -4182,23 +4182,27 @@ def validate(
                         )
             date_style = params.get("WFDateFormatStyle")
             date_format = params.get("WFDateFormat")
-            legacy_custom_shape = "WFDateFormatString" in params or date_format == "Custom"
-            if legacy_custom_shape:
-                # Validates and imports, but the formatted date resolves EMPTY on
-                # device: the runtime ignores WFDateFormatString, and Shortcuts
-                # itself never writes this shape.
+            # The shape WFDateFormat=Custom + pattern in WFDateFormatString validates
+            # and imports, but the formatted date resolves EMPTY on device: the
+            # runtime reads the pattern from WFDateFormat and ignores
+            # WFDateFormatString, and Shortcuts itself never writes either key form.
+            if "WFDateFormatString" in params:
                 errors.append(
-                    "Format Date custom pattern belongs in WFDateFormat with WFDateFormatStyle=Custom; "
-                    "WFDateFormatString is ignored at runtime and WFDateFormat=Custom is not a pattern "
-                    f"at index {idx}"
+                    "Format Date WFDateFormatString is ignored at runtime; put the pattern in "
+                    f"WFDateFormat with WFDateFormatStyle=Custom at index {idx}"
                 )
-            else:
+            if date_format == "Custom":
+                errors.append(
+                    "Format Date WFDateFormat=Custom is not a pattern; put the pattern itself in "
+                    f"WFDateFormat with WFDateFormatStyle=Custom at index {idx}"
+                )
+            if "WFDateFormatString" not in params and date_format != "Custom":
                 format_is_blank = date_format is None or (
                     isinstance(date_format, str) and not date_format.strip()
                 )
                 if date_style == "Custom" and format_is_blank:
                     errors.append(f"Format Date custom format is empty at index {idx}")
-                if date_style is None and not format_is_blank:
+                if date_style != "Custom" and not format_is_blank:
                     errors.append(f"Format Date custom style must be set to Custom at index {idx}")
             custom_name = params.get("CustomOutputName")
             enforce_custom_style = custom_name in {"Start Date", "End Date"}
