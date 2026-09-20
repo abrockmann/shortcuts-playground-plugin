@@ -707,6 +707,16 @@ UNIT_KEYWORD_IGNORED_KEYS = {
 }
 
 
+def _format_date_custom_pattern(params: dict) -> str:
+    """Return the custom pattern a Format Date action renders with, or ""."""
+    if params.get("WFDateFormatStyle") != "Custom":
+        return ""
+    fmt = params.get("WFDateFormat")
+    if not isinstance(fmt, str) or fmt == "Custom":
+        return ""
+    return fmt
+
+
 def _coerce_control_flow_mode(params: dict) -> int | None:
     """Extract WFControlFlowMode as int, coercing string digits."""
     mode = params.get("WFControlFlowMode")
@@ -4170,15 +4180,30 @@ def validate(
                         errors.append(
                             f"{source_prop} returns a list; use Get Item from List ({expected}) before Format Date at index {idx}"
                         )
-            if params.get("WFDateFormat") == "Custom" and not params.get("WFDateFormatString"):
-                errors.append(f"Format Date custom format is empty at index {idx}")
-            if params.get("WFDateFormat") == "Custom" and params.get("WFDateFormatString"):
-                if params.get("WFDateFormatStyle") != "Custom":
+            date_style = params.get("WFDateFormatStyle")
+            date_format = params.get("WFDateFormat")
+            legacy_custom_shape = "WFDateFormatString" in params or date_format == "Custom"
+            if legacy_custom_shape:
+                # Validates and imports, but the formatted date resolves EMPTY on
+                # device: the runtime ignores WFDateFormatString, and Shortcuts
+                # itself never writes this shape.
+                errors.append(
+                    "Format Date custom pattern belongs in WFDateFormat with WFDateFormatStyle=Custom; "
+                    "WFDateFormatString is ignored at runtime and WFDateFormat=Custom is not a pattern "
+                    f"at index {idx}"
+                )
+            else:
+                format_is_blank = date_format is None or (
+                    isinstance(date_format, str) and not date_format.strip()
+                )
+                if date_style == "Custom" and format_is_blank:
+                    errors.append(f"Format Date custom format is empty at index {idx}")
+                if date_style is None and not format_is_blank:
                     errors.append(f"Format Date custom style must be set to Custom at index {idx}")
             custom_name = params.get("CustomOutputName")
             enforce_custom_style = custom_name in {"Start Date", "End Date"}
-            if params.get("WFDateFormat") == "Custom":
-                fmt = params.get("WFDateFormatString", "")
+            fmt = _format_date_custom_pattern(params)
+            if fmt:
                 if enforce_custom_style:
                     if fmt and not allow_datetime_format and re.search(r"[HhmsZ]|'T'", fmt):
                         errors.append(
@@ -4195,11 +4220,9 @@ def validate(
             if isinstance(name, str) and name.strip() and name in {"Start Date", "End Date"}:
                 fmt_params = var_format_dates.get(name)
                 if fmt_params is not None:
-                    fmt_key = fmt_params.get("WFDateFormat")
-                    fmt_str = fmt_params.get("WFDateFormatString", "")
-                    # Accept Custom or a direct date-only format (e.g., yyyy-MM-dd)
-                    effective = fmt_str if fmt_key == "Custom" else (fmt_key or fmt_str)
-                    if not allow_datetime_format and isinstance(effective, str) and re.search(r"[HhmsZ]|'T'", effective):
+                    # The pattern lives in WFDateFormat when WFDateFormatStyle is Custom
+                    effective = _format_date_custom_pattern(fmt_params)
+                    if not allow_datetime_format and effective and re.search(r"[HhmsZ]|'T'", effective):
                         errors.append(f"{name} should use date-only format (yyyy-MM-dd)")
 
         if ident in DESTRUCTIVE_FILE_ACTIONS:

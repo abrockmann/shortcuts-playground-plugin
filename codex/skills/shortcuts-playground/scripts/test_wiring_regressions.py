@@ -449,6 +449,91 @@ def make_get_time_between_dates_attachment_invalid(case_name: str) -> tuple[dict
     return plist, "should use WFTextTokenString"
 
 
+def make_format_date_custom_valid(case_name: str, variable_name: str = "Stamp") -> dict:
+    actions = base_actions(case_name, "Format the current date with a custom pattern.")
+    date_uuid = seeded_uuid(f"{case_name}-date")
+    format_uuid = seeded_uuid(f"{case_name}-format")
+    actions.extend(
+        [
+            {
+                "WFWorkflowActionIdentifier": "is.workflow.actions.date",
+                "WFWorkflowActionParameters": {
+                    "UUID": date_uuid,
+                    "WFDateActionMode": "Current Date",
+                },
+            },
+            {
+                "WFWorkflowActionIdentifier": "is.workflow.actions.format.date",
+                "WFWorkflowActionParameters": {
+                    "UUID": format_uuid,
+                    "WFDate": token_string_action_output(date_uuid, "Date"),
+                    "WFDateFormatStyle": "Custom",
+                    "WFDateFormat": "yyyy-MM-dd",
+                },
+            },
+            {
+                "WFWorkflowActionIdentifier": "is.workflow.actions.setvariable",
+                "WFWorkflowActionParameters": {
+                    "WFVariableName": variable_name,
+                    "WFInput": attachment_action_output(format_uuid, "Formatted Date"),
+                },
+            },
+        ]
+    )
+    return root_plist(case_name, actions)
+
+
+def _format_date_params(plist: dict) -> dict:
+    return plist["WFWorkflowActions"][-2]["WFWorkflowActionParameters"]
+
+
+def make_format_date_legacy_shape_invalid(case_name: str) -> tuple[dict, str]:
+    # Validated and imported before 1.2.1-agency.3, resolved EMPTY on device.
+    plist = make_format_date_custom_valid(case_name)
+    params = _format_date_params(plist)
+    params["WFDateFormat"] = "Custom"
+    params["WFDateFormatString"] = "yyyy-MM-dd"
+    return plist, "WFDateFormatString is ignored at runtime"
+
+
+def make_format_date_stray_format_string_invalid(case_name: str) -> tuple[dict, str]:
+    plist = make_format_date_custom_valid(case_name)
+    _format_date_params(plist)["WFDateFormatString"] = "yyyy-MM-dd"
+    return plist, "WFDateFormatString is ignored at runtime"
+
+
+def make_format_date_custom_keyword_invalid(case_name: str) -> tuple[dict, str]:
+    plist = make_format_date_custom_valid(case_name)
+    _format_date_params(plist)["WFDateFormat"] = "Custom"
+    return plist, "WFDateFormat=Custom is not a pattern"
+
+
+def make_format_date_custom_empty_invalid(case_name: str) -> tuple[dict, str]:
+    plist = make_format_date_custom_valid(case_name)
+    del _format_date_params(plist)["WFDateFormat"]
+    return plist, "custom format is empty"
+
+
+def make_format_date_pattern_without_style_invalid(case_name: str) -> tuple[dict, str]:
+    plist = make_format_date_custom_valid(case_name)
+    del _format_date_params(plist)["WFDateFormatStyle"]
+    return plist, "custom style must be set to Custom"
+
+
+def make_format_date_start_date_time_invalid(case_name: str) -> tuple[dict, str]:
+    plist = make_format_date_custom_valid(case_name, variable_name="Start Date")
+    _format_date_params(plist)["WFDateFormat"] = "yyyy-MM-dd'T'HH:mm"
+    return plist, "Start Date should use date-only format"
+
+
+def make_format_date_custom_output_time_invalid(case_name: str) -> tuple[dict, str]:
+    plist = make_format_date_custom_valid(case_name)
+    params = _format_date_params(plist)
+    params["CustomOutputName"] = "End Date"
+    params["WFDateFormat"] = "yyyy-MM-dd 23:59:59"
+    return plist, "hardcodes start/end of day"
+
+
 def make_text_token_placeholder_invalid(case_name: str) -> tuple[dict, str]:
     actions = base_actions(case_name, "Reject token strings whose range points away from the placeholder.")
     date_uuid = seeded_uuid(f"{case_name}-date")
@@ -1932,6 +2017,33 @@ def build_cases() -> list[Case]:
     ]:
         plist, expected = maker(name)
         cases.append(Case("date-delta", name, plist, False, expected))
+    cases.append(
+        Case(
+            "format-date",
+            "ZZ-Format-Date-Custom-Valid",
+            make_format_date_custom_valid("ZZ-Format-Date-Custom-Valid"),
+            True,
+        )
+    )
+    cases.append(
+        Case(
+            "format-date",
+            "ZZ-Format-Date-Start-Date-Valid",
+            make_format_date_custom_valid("ZZ-Format-Date-Start-Date-Valid", variable_name="Start Date"),
+            True,
+        )
+    )
+    for name, maker in [
+        ("ZZ-Format-Date-Legacy-Shape-Invalid", make_format_date_legacy_shape_invalid),
+        ("ZZ-Format-Date-Stray-Format-String-Invalid", make_format_date_stray_format_string_invalid),
+        ("ZZ-Format-Date-Custom-Keyword-Invalid", make_format_date_custom_keyword_invalid),
+        ("ZZ-Format-Date-Custom-Empty-Invalid", make_format_date_custom_empty_invalid),
+        ("ZZ-Format-Date-Pattern-Without-Style-Invalid", make_format_date_pattern_without_style_invalid),
+        ("ZZ-Format-Date-Start-Date-Time-Invalid", make_format_date_start_date_time_invalid),
+        ("ZZ-Format-Date-Custom-Output-Time-Invalid", make_format_date_custom_output_time_invalid),
+    ]:
+        plist, expected = maker(name)
+        cases.append(Case("format-date", name, plist, False, expected))
 
     # 43 weather cases (21 valid + 22 invalid)
     for idx in range(20):

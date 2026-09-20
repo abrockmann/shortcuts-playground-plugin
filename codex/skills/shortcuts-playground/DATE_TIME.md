@@ -64,7 +64,7 @@ Wrap literal text in single quotes, including the ISO separator `T`: `yyyy-MM-dd
 For `is.workflow.actions.format.date`:
 
 - Always set `WFDate` to the source Date as an editor-visible token string.
-- For custom formats, set `WFDateFormatStyle` to `Custom`, set `WFDateFormat` to `Custom`, and put the custom pattern in `WFDateFormatString`.
+- For custom formats, set `WFDateFormatStyle` to `Custom` and put the custom pattern itself in `WFDateFormat` (e.g. `yyyy-MM-dd'T'HH:mm`). Do **not** emit `WFDateFormatString` and do not set `WFDateFormat=Custom`: with that shape the formatted date resolved empty on device (2026-09-20). Shortcuts itself writes the pattern into `WFDateFormat`, and the runtime ignores `WFDateFormatString` (see CHANGELOG, "WFDateFormat vs WFDateFormatString").
 - Keep the unformatted Date value available for later **Adjust Date**, **Get Time Between Dates**, or comparison actions.
 
 ## Sources
